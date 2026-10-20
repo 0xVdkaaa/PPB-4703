@@ -54,7 +54,6 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
-            // Icon disesuaikan dengan tema Skincare
             Icon(Icons.spa, size: 100, color: Colors.teal),
             SizedBox(height: 20),
             Text("Selamat Datang", style: TextStyle(fontSize: 24)),
@@ -155,7 +154,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   double totalJual = 0;
 
-  // DATA SKINCARE + QTY (Sesuai foto di folder assets lu)
   final List<Map<String, dynamic>> products = [
     {
       'nama': 'COSRX Set',
@@ -203,7 +201,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // Fungsi untuk mereset keranjang setelah bayar
   void _resetKeranjang() {
     setState(() {
       totalJual = 0;
@@ -403,10 +400,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       bottomNavigationBar: InkWell(
         onTap: () {
           if (totalJual > 0) {
+            // Ambil daftar barang yang dibeli (qty > 0)
+            List<Map<String, dynamic>> keranjang = products
+                .where((p) => p['qty'] > 0)
+                .toList();
+
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PaymentScreen(totalBayar: totalJual),
+                builder: (context) =>
+                    PaymentScreen(totalBayar: totalJual, keranjang: keranjang),
               ),
             ).then((value) {
               if (value == true) {
@@ -442,7 +445,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ==========================================
 class PaymentScreen extends StatefulWidget {
   final double totalBayar;
-  const PaymentScreen({super.key, required this.totalBayar});
+  final List<Map<String, dynamic>> keranjang;
+
+  const PaymentScreen({
+    super.key,
+    required this.totalBayar,
+    required this.keranjang,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -463,53 +472,92 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Pembayaran')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Total Transaksi:',
+              'Daftar Belanjaan:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'Rp ${widget.totalBayar}',
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(height: 30),
-            TextField(
-              controller: _bayarCtrl,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(
-                labelText: 'Jumlah Pembayaran (Rp)',
-                border: OutlineInputBorder(),
-              ),
             ),
             const SizedBox(height: 10),
+            // ListView untuk menampilkan daftar produk
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: widget.keranjang.length,
+              itemBuilder: (context, index) {
+                final item = widget.keranjang[index];
+                final subtotal = item['harga'] * item['qty'];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    item['nama'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text('Rp ${item['harga']} x ${item['qty']}'),
+                  trailing: Text(
+                    'Rp $subtotal',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                );
+              },
+            ),
+            const Divider(thickness: 2),
+            const SizedBox(height: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  'Total Transaksi:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Rp ${widget.totalBayar}',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    color: Colors.teal,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                TextField(
+                  controller: _bayarCtrl,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    labelText: 'Jumlah Pembayaran (Rp)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: hitungKembalian,
+                  child: const Text('Hitung Kembalian'),
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'Kembali:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Rp $kembalian',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: kembalian < 0 ? Colors.red : Colors.green,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: hitungKembalian,
-              child: const Text('Hitung Kembalian'),
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              'Kembali:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'Rp $kembalian',
-              style: TextStyle(
-                fontSize: 24,
-                color: kembalian < 0 ? Colors.red : Colors.green,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 15),
               ),
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Selesai'),
-              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Selesai', style: TextStyle(fontSize: 18)),
             ),
           ],
         ),
