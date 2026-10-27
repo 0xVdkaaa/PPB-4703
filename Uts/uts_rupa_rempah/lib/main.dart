@@ -220,7 +220,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onSelected: (value) {
               if (value == 'call') _launchURL('tel:081234567890');
               if (value == 'sms') _launchURL('sms:081234567890');
-              if (value == 'maps') _launchURL('geo:-7.5666,110.8166');
+              if (value == 'maps')
+                _launchURL(
+                    'https://www.google.com/maps/search/?api=1&query=udinus');
               if (value == 'update') {
                 Navigator.push(
                   context,
@@ -350,7 +352,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -401,9 +402,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: () {
           if (totalJual > 0) {
             // Ambil daftar barang yang dibeli (qty > 0)
-            List<Map<String, dynamic>> keranjang = products
-                .where((p) => p['qty'] > 0)
-                .toList();
+            List<Map<String, dynamic>> keranjang =
+                products.where((p) => p['qty'] > 0).toList();
 
             Navigator.push(
               context,
